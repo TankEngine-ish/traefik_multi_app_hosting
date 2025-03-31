@@ -1,0 +1,115 @@
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8081:8080" 
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./letsencrypt:/letsencrypt  
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+     
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.propertyapp.duckdns.org`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+     
+      - "traefik.http.middlewares.security-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.security-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.security-headers.headers.stsSeconds=315360000"
+      - "traefik.http.routers.dashboard.middlewares=security-headers@docker"
+
+  
+  nasa-server:
+    image: tankengine/dead_space:latest
+    container_name: nasa-server
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    environment:
+      - PORT=8000
+      - MONGO_URL=${NASA_MONGO_URL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nasa.rule=Host(`majortomtogroundcontrol.duckdns.org`)"
+      - "traefik.http.services.nasa.loadbalancer.server.port=8000"
+      - "traefik.http.routers.nasa.entrypoints=websecure"
+      - "traefik.http.routers.nasa.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.nasa.middlewares=security-headers@docker"
+      
+      - "traefik.http.middlewares.nasa-rate-limit.ratelimit.average=100"
+      - "traefik.http.middlewares.nasa-rate-limit.ratelimit.burst=50"
+      - "traefik.http.routers.nasa.middlewares=security-headers@docker,nasa-rate-limit@docker"
+
+  
+  nextapp:
+    build:
+      context: ../property_management_system_full_stack_app/frontend
+      dockerfile: next.dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=https://propertyapp.duckdns.org
+    networks:
+      - traefik_network
+    environment:
+      - NEXT_PUBLIC_API_URL=https://propertyapp.duckdns.org
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextapp.rule=Host(`propertyapp.duckdns.org`)"
+      - "traefik.http.services.nextapp.loadbalancer.server.port=3000"
+      - "traefik.http.routers.nextapp.entrypoints=websecure"
+      - "traefik.http.routers.nextapp.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.nextapp.middlewares=security-headers@docker"
+
+ 
+  goapp:
+    build:
+      context: ../property_management_system_full_stack_app/backend
+      dockerfile: go.dockerfile
+    networks:
+      - traefik_network
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.goapp.rule=Host(`propertyapp.duckdns.org`) && PathPrefix(`/api`)"
+      - "traefik.http.services.goapp.loadbalancer.server.port=8000"
+      - "traefik.http.routers.goapp.entrypoints=websecure"
+      - "traefik.http.routers.goapp.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.cors.headers.accessControlAllowOriginList=*"
+      - "traefik.http.middlewares.cors.headers.accessControlAllowMethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.cors.headers.accessControlAllowHeaders=Content-Type,Authorization"
+      
+      - "traefik.http.middlewares.api-rate-limit.ratelimit.average=100"
+      - "traefik.http.middlewares.api-rate-limit.ratelimit.burst=50"
+      - "traefik.http.routers.goapp.middlewares=cors@docker,security-headers@docker,api-rate-limit@docker"
+      
+ 
+  db:
+    container_name: db
+    image: postgres:15
+    networks:
+      - traefik_network
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+
+networks:
+  traefik_network:
+    name: traefik_network
+
+
+volumes:
+  pgdata:
