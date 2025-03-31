@@ -1,0 +1,65 @@
+{
+  "lastCheck": "2025-03-31T19:28:22.115Z",
+  "services": {
+    "Traefik Dashboard": {
+      "name": "Traefik Dashboard",
+      "url": "https://traefik.propertyapp.duckdns.org/dashboard/",
+      "status": "HEALTHY",
+      "statusCode": 200,
+      "responseTime": 50,
+      "certificate": {
+        "issuer": "TRAEFIK DEFAULT CERT",
+        "expirationDate": "2026-03-31T13:30:55.000Z",
+        "daysToExpiration": 365
+      },
+      "timestamp": "2025-03-31T19:28:22.079Z"
+    },
+    "NASA App": {
+      "name": "NASA App",
+      "url": "https://majortomtogroundcontrol.duckdns.org",
+      "status": "HEALTHY",
+      "statusCode": 200,
+      "responseTime": 30,
+      "certificate": {
+        "issuer": "TRAEFIK DEFAULT CERT",
+        "expirationDate": "2026-03-31T13:30:55.000Z",
+        "daysToExpiration": 365
+      },
+      "timestamp": "2025-03-31T19:28:22.082Z"
+    },
+    "Property App Frontend": {
+      "name": "Property App Frontend",
+      "url": "https://propertyapp.duckdns.org",
+      "status": "HEALTHY",
+      "statusCode": 200,
+      "responseTime": 44,
+      "certificate": {
+        "issuer": "TRAEFIK DEFAULT CERT",
+        "expirationDate": "2026-03-31T13:30:55.000Z",
+        "daysToExpiration": 365
+      },
+      "timestamp": "2025-03-31T19:28:22.097Z"
+    },
+    "Property App API": {
+      "name": "Property App API",
+      "url": "https://propertyapp.duckdns.org/api/repair/users",
+      "status": "HEALTHY",
+      "statusCode": 200,
+      "responseTime": 39,
+      "certificate": {
+        "issuer": "TRAEFIK DEFAULT CERT",
+        "expirationDate": "2026-03-31T13:30:55.000Z",
+        "daysToExpiration": 365
+      },
+      "timestamp": "2025-03-31T19:28:22.094Z"
+    }
+  },
+  "alerts": [],
+  "containerStatus": {
+    "traefik_multi_app_hosting-goapp-1": "Up 6 hours",
+    "nasa-server": "Up 6 hours",
+    "db": "Up 6 hours",
+    "traefik_multi_app_hosting-nextapp-1": "Up 6 hours",
+    "traefik": "Up 6 hours"
+  }
+}
