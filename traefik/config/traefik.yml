@@ -16,7 +16,7 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: plamen_0989@abv.bgZZ
+      email: plamen_0989@abv.bg
       storage: /letsencrypt/acme.json
       httpChallenge:
         entryPoint: web
