@@ -7,13 +7,14 @@ I encountered several challenges along the way and this document chronicles my p
 
 I began with two distinct applications that needed to coexist and be easily accessible:
 
-**NASA Space Exploration App - A Node.js/Express backend with React frontend and MongoDB database**
-**Property Management System - A Go backend with Next.js frontend and PostgreSQL database**
+- **Dead Space Exploration App - A Node.js/Express backend with React frontend and MongoDB database** - A simple Space App that uses some outdated SpaceX Api from github.
+
+- **Property Management System - A Go backend with Next.js frontend and PostgreSQL database** - A Property Management App that tracks the financial reserve for property repairs.
 
 My goal was to use Traefik as a reverse proxy to route traffic to these applications based on domain names:
 
-[nasa.localhost](https://majortomtogroundcontrol.duckdns.org/) → A simple Space App that uses some outdated SpaceX Api from github.
-[property.localhost](https://propertyapp.duckdns.org/) → A Property Management App that tracks the financial reserve for property repairs.
+* (https://majortomtogroundcontrol.duckdns.org/) 
+* (https://propertyapp.duckdns.org/) 
 
 ### Challenge 1: Choosing the Right Reverse Proxy
 Initially, I attempted to use Envoy Proxy for this task. While Envoy offers powerful features for microservice architectures, I quickly discovered that I can't deal with verbose YAML configuration and lack of automatic service discovery made so soon after setting up my property app infrastructure - https://github.com/TankEngine-ish/property_management_system_infrastructure
@@ -51,13 +52,15 @@ This approach ensured that the correct URL was embedded in the JavaScript bundle
 
 ### Challenge 5: Cross-Origin Resource Sharing (CORS)
 
-After resolving the hardcoded URL issue, I encountered some CORS errors:
+After resolving the hardcoded URL issue, I encountered some CORS errors such as:
+```
 CopyAccess to XMLHttpRequest at 'http://property.localhost/api/repair/users' from origin 'http://172.18.0.5:3000' has been blocked by CORS policy
-They occurred because the frontend was being accessed at its container's IP address and port (172.18.0.5:3000) rather than through Traefik at property.localhost. Modern browsers implement a security feature that prevents web pages from making requests to different domains than the one they were loaded from, unless the server explicitly allows it.
-We addressed this by:
+```
+This was before I set-up the DNS.
+These errors occurred because the frontend was being accessed at its container's IP address and port rather than through Traefik at property.localhost. 
+I addressed this by:
 
-I had to ensure that both frontend and backend were accessed through Traefik using the same domain
-* I added appropriate CORS headers to the Go backend
+* Adding appropriate CORS headers to the Go backend
 * Configured Traefik to add CORS headers through middleware
 
 ```
@@ -70,8 +73,28 @@ yamlCopy- "traefik.http.middlewares.cors.headers.accessControlAllowOriginList=*"
 ![alt text](<assets/Screenshot from 2025-03-31 16-32-15.png>)
 
 
+## A Health Check Script in JS
+
+What this monitoring.js script in the repository does is it:
+
+- Checks the health of my Traefik dashboard and applications by making HTTP requests
+- Verifies SSL certificate expiration dates
+- Monitors response times and alerts if they exceed thresholds
+- Checks the status of my Docker containers
+- Generates alerts for any issues detected
+- Displays colorized output in the console like this: 
+
+![alt text](<assets/Screenshot from 2025-04-01 14-09-54.png>)
+
+I gotta be honest the main reason I added this script is because I just didn't like not having a Language used star under my github's repository name. Now I have Javascript which is better than nothing.
+
+P.S. Make sure you have Node.js installed on your system and then you run the script with:
+
+```
+node monitoring.js
+```
 
 ## Final thoughts
-With this configuration, all services ran harmoniously, with Traefik correctly routing requests to the appropriate applications based on the domain name. Both the NASA Space App and Property Management System were accessible through their respective domains.
+With this configuration, all services ran harmoniously, with Traefik correctly routing requests to the appropriate applications based on the domain name. Both the Dead Space App and Property Management System were accessible through their respective domains.
 
-![alt text](<assets/Screenshot from 2025-03-31 16-31-27 copy.png>)
+![alt text](<assets/Screenshot from 2025-03-31 16-32-22.png>)
